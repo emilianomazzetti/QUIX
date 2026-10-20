@@ -27,32 +27,7 @@ let roomState: RoomState = {
   phase: 'lobby',
   currentQuestionIndex: 0,
   questions: INITIAL_QUESTIONS,
-  players: {
-    'player-demo-1': {
-      id: 'player-demo-1',
-      name: 'Marco R.',
-      score: 120,
-      streak: 2,
-      avatar: '🚀',
-      isSimulated: true
-    },
-    'player-demo-2': {
-      id: 'player-demo-2',
-      name: 'Giulia V.',
-      score: 95,
-      streak: 1,
-      avatar: '🦊',
-      isSimulated: true
-    },
-    'player-demo-3': {
-      id: 'player-demo-3',
-      name: 'Sofia M.',
-      score: 140,
-      streak: 3,
-      avatar: '🌟',
-      isSimulated: true
-    }
-  },
+  players: {},
   answersThisTurn: {},
   drawingsThisTurn: {},
   turnStartTime: 0,
@@ -108,23 +83,26 @@ app.get('/api/room/events', (req: Request, res: Response) => {
 });
 
 app.post('/api/room/join', (req: Request, res: Response) => {
-  const { name, avatar } = req.body;
+  const { id, name, avatar } = req.body;
   if (!name) {
     return res.status(400).json({ error: 'Nome obbligatorio' });
   }
 
-  // Check if player already exists by name or create new
-  let existingId = Object.keys(roomState.players).find(
-    (id) => roomState.players[id].name.toLowerCase() === name.trim().toLowerCase()
-  );
+  // Use the ID provided by the client, or look up existing by name, or generate
+  let playerId = id;
+  if (!playerId) {
+    const existingId = Object.keys(roomState.players).find(
+      (pid) => roomState.players[pid].name.toLowerCase() === name.trim().toLowerCase()
+    );
+    playerId = existingId || `p-${Date.now()}`;
+  }
 
-  const playerId = existingId || `p-${Date.now()}`;
-  const player: Player = roomState.players[playerId] || {
+  const player: Player = {
     id: playerId,
     name: name.trim(),
     avatar: avatar || '🚀',
-    score: 0,
-    streak: 0,
+    score: roomState.players[playerId]?.score || 0,
+    streak: roomState.players[playerId]?.streak || 0,
     isSimulated: false
   };
 
@@ -302,26 +280,70 @@ app.post('/api/room/next', (_req: Request, res: Response) => {
 });
 
 app.post('/api/room/simulate-students', (req: Request, res: Response) => {
-  const count = req.body.count || 4;
-  const names = ['Matteo P.', 'Federica S.', 'Lorenzo B.', 'Elena D.', 'Davide M.', 'Chiara L.'];
-  const avatars = ['🚀', '🦊', '🌟', '⚡', '🐼', '🎨'];
+  const count = req.body.count || 1;
+  const names = [
+    'Matteo P.',
+    'Federica S.',
+    'Lorenzo B.',
+    'Elena D.',
+    'Davide M.',
+    'Chiara L.',
+    'Andrea T.',
+    'Martina G.',
+    'Luca R.',
+    'Sara B.'
+  ];
+  const avatars = ['🚀', '🦊', '🌟', '⚡', '🐼', '🎨', '🦁', '🦉', '🐬', '🐯'];
+
+  const existingNames = new Set(
+    Object.values(roomState.players).map((p) => p.name.toLowerCase())
+  );
 
   for (let i = 0; i < count; i++) {
-    const id = `bot-${Date.now()}-${i}`;
-    const name = names[i % names.length];
-    const avatar = avatars[i % avatars.length];
+    const id = `bot-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const available = names.filter((n) => !existingNames.has(n.toLowerCase()));
+    const name =
+      available.length > 0
+        ? available[0]
+        : `${names[i % names.length]} ${Math.floor(Math.random() * 90) + 10}`;
+    existingNames.add(name.toLowerCase());
+    const avatar = avatars[Math.floor(Math.random() * avatars.length)];
+
     roomState.players[id] = {
       id,
       name,
       avatar,
-      score: Math.floor(Math.random() * 80) + 20,
-      streak: 1,
+      score: 0,
+      streak: 0,
       isSimulated: true
     };
   }
 
   broadcastState();
   res.json({ success: true, playersCount: Object.keys(roomState.players).length });
+});
+
+app.post('/api/room/kick', (req: Request, res: Response) => {
+  const { playerId } = req.body;
+  if (playerId && roomState.players[playerId]) {
+    delete roomState.players[playerId];
+    delete roomState.answersThisTurn[playerId];
+    delete roomState.drawingsThisTurn[playerId];
+    broadcastState();
+  }
+  res.json({ success: true });
+});
+
+app.post('/api/room/wipe', (_req: Request, res: Response) => {
+  roomState.phase = 'lobby';
+  roomState.currentQuestionIndex = 0;
+  roomState.questions = [];
+  roomState.players = {};
+  roomState.answersThisTurn = {};
+  roomState.drawingsThisTurn = {};
+  roomState.resetEpoch = Date.now();
+  broadcastState();
+  res.json({ success: true, roomState });
 });
 
 app.post('/api/room/reset', (_req: Request, res: Response) => {

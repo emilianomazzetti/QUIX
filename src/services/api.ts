@@ -64,12 +64,17 @@ export const api = {
     return null;
   },
 
-  async join(name: string, avatar: string, pin: string): Promise<{ player: Player; roomState: RoomState } | null> {
+  async join(
+    id: string,
+    name: string,
+    avatar: string,
+    pin: string
+  ): Promise<{ player: Player; roomState: RoomState } | null> {
     try {
       const res = await fetch('/api/room/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, avatar, pin })
+        body: JSON.stringify({ id, name, avatar, pin })
       });
       if (res.ok) return await res.json();
     } catch (e) {
@@ -180,6 +185,30 @@ export const api = {
       return res.ok;
     } catch (e) {
       console.warn('API simulateStudents failed:', e);
+    }
+    return false;
+  },
+
+  async kickPlayer(playerId: string): Promise<boolean> {
+    try {
+      const res = await fetch('/api/room/kick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId })
+      });
+      return res.ok;
+    } catch (e) {
+      console.warn('API kickPlayer failed:', e);
+    }
+    return false;
+  },
+
+  async wipeRoom(): Promise<boolean> {
+    try {
+      const res = await fetch('/api/room/wipe', { method: 'POST' });
+      return res.ok;
+    } catch (e) {
+      console.warn('API wipeRoom failed:', e);
     }
     return false;
   },

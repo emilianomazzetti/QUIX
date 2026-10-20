@@ -45,7 +45,7 @@ interface TeacherMonitorProps {
   onTerminateGame: () => void;
   onUpdateQuestionPointsAndTime: (qId: string | 'all', points: number, timeLimit: number) => void;
   onDeleteQuestion: (qId: string) => void;
-  onAddSimulatedStudents: (count: number, botName?: string) => void;
+  onAddSimulatedStudents: (count?: number) => void;
   onKickStudent?: (playerId: string) => void;
   onToggleSound: () => void;
   onResetGame: () => void;
@@ -414,21 +414,12 @@ export const TeacherMonitor: React.FC<TeacherMonitorProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onAddSimulatedStudents(1, 'Cazzullo')}
-                      className="px-2.5 py-1 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 text-indigo-300 rounded-xl text-xs font-black flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                      title="Aggiungi il bot Cazzullo"
+                      onClick={() => onAddSimulatedStudents(1)}
+                      className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-500/40 text-indigo-300 hover:text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-sm"
+                      title="Aggiungi un bot alla volta alla classe"
                     >
-                      <span>🦉</span>
-                      <span>+ Bot Cazzullo</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onAddSimulatedStudents(3)}
-                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 rounded-xl text-xs font-bold flex items-center gap-1 transition-all active:scale-95 cursor-pointer"
-                      title="Aggiungi compagni di classe simulati"
-                    >
-                      <PlusCircle className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>+ 3 Bot Compagni</span>
+                      <PlusCircle className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>+1 Bot</span>
                     </button>
                   </div>
                 </div>
@@ -456,7 +447,7 @@ export const TeacherMonitor: React.FC<TeacherMonitorProps> = ({
                   ))}
                   {playersList.length === 0 && (
                     <span className="text-xs text-slate-500 italic">
-                      In attesa degli studenti... (inquadra il QR code oppure clicca su "+ Bot Cazzullo")
+                      In attesa degli studenti... (inquadra il QR code oppure clicca su "+1 Bot")
                     </span>
                   )}
                 </div>

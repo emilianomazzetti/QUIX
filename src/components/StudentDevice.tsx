@@ -28,6 +28,7 @@ interface StudentDeviceProps {
   roomState: RoomState;
   myPlayer: Player | null;
   initialPin?: string;
+  wasKicked?: boolean;
   onJoinRoom: (name: string, avatar: string, pin: string) => void;
   onSubmitQuestion: (question: Question) => void;
   onSubmitAnswer: (isCorrect: boolean, payload?: any) => void;
@@ -42,6 +43,7 @@ export const StudentDevice: React.FC<StudentDeviceProps> = ({
   roomState,
   myPlayer,
   initialPin,
+  wasKicked = false,
   onJoinRoom,
   onSubmitQuestion,
   onSubmitAnswer,
@@ -61,22 +63,11 @@ export const StudentDevice: React.FC<StudentDeviceProps> = ({
     if (initialPin) setPin(initialPin);
   }, [initialPin]);
 
-  const isKickedOrWiped = Boolean(
-    myPlayer && roomState.players && !roomState.players[myPlayer.id]
-  );
-
+  // Active player resolution: live score from roomState or local player
   const activePlayer =
-    myPlayer && roomState.players
-      ? roomState.players[myPlayer.id] || null
+    myPlayer && roomState.players && roomState.players[myPlayer.id]
+      ? roomState.players[myPlayer.id]
       : myPlayer;
-
-  useEffect(() => {
-    if (isKickedOrWiped) {
-      try {
-        localStorage.removeItem('flipquiz_my_player');
-      } catch (e) {}
-    }
-  }, [isKickedOrWiped]);
 
   const questionsList = roomState.questions || [];
   const currentQ = questionsList[roomState.currentQuestionIndex] || questionsList[0];
@@ -153,7 +144,7 @@ export const StudentDevice: React.FC<StudentDeviceProps> = ({
           </p>
         </div>
 
-        {isKickedOrWiped && (
+        {wasKicked && (
           <div className="p-3 bg-amber-500/20 border border-amber-500/40 rounded-2xl text-amber-300 text-xs text-center font-bold animate-fade-in">
             Sei stato rimosso dalla sessione o il database è stato azzerato. Inserisci il tuo nome per accedere nuovamente.
           </div>
